@@ -1,11 +1,11 @@
 package org.example.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.exception.TaskNotFoundException;
 import org.example.model.StatusEnum;
 import org.example.model.Task;
 import org.example.repository.TaskRepository;
 
-import javax.swing.text.DateFormatter;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
@@ -30,12 +30,10 @@ public class TaskService {
         return taskRepository.getAll();
     }
 
-    public Task getTask(Long id) {
-        return taskRepository.get(id);
-    }
-
-    public Task deleteTask(Long id) {
-        return taskRepository.delete(id);
+    public Task deleteTask(Long id) throws TaskNotFoundException {
+        Task deletedTask = taskRepository.delete(id);
+        if (deletedTask == null) throw new TaskNotFoundException(id);
+        return deletedTask;
     }
 
     public Task editTask(Long id,
@@ -43,8 +41,10 @@ public class TaskService {
                         String description,
                         String status,
                         String deadline
-                        ) {
+                        ) throws TaskNotFoundException {
         Task processingTask = taskRepository.get(id);
+
+        if (processingTask == null) throw new TaskNotFoundException(id);
 
         if (!name.isEmpty()) processingTask.setName(name);
         if (!description.isEmpty()) processingTask.setDescription(description);

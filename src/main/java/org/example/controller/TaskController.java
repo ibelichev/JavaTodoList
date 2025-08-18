@@ -1,15 +1,16 @@
 package org.example.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.exception.TaskNotFoundException;
 import org.example.model.StatusEnum;
 import org.example.model.Task;
 import org.example.service.TaskService;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Scanner;
 
 @RequiredArgsConstructor
@@ -17,10 +18,11 @@ public class TaskController {
     private final TaskService taskServices;
     private final DateTimeFormatter dateFormatter;
     private final Scanner scanner = new Scanner(System.in);
-    private static final int exitCode = 228;
+    private static final int exitCode = 0;
 
     public void handleCommand() {
         System.out.println("""
+            
             add
             list
             edit
@@ -35,28 +37,31 @@ public class TaskController {
         String command = parts[0];
 
         // обработать индекс аут, преобразование в енам итд
-        switch (command) {
-            case "add" -> addTask();
-            case "list" -> list();
-            case "edit" -> {
-                Long argument = Long.valueOf(parts[1]);
-                edit(argument);
+        try {
+            switch (command) {
+                case "add" -> addTask();
+                case "list" -> list();
+                case "edit" -> {
+                    Long argument = Long.valueOf(parts[1]);
+                    edit(argument);
+                }
+                case "delete" -> {
+                    Long argument = Long.valueOf(parts[1]);
+                    delete(argument);
+                }
+                case "filter" -> {
+                    String argument = parts[1];
+                    filter(argument);
+                }
+                case "sort" -> sort();
+                case "exit" -> System.exit(exitCode);
             }
-            case "delete" -> {
-                Long argument = Long.valueOf(parts[1]);
-                delete(argument);
-            }
-            case "filter" -> {
-                String argument = parts[1];
-                filter(argument);
-            }
-            case "sort" -> {
-                sort();
-            }
-            case "exit" -> {
-                System.exit(exitCode);
-            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+            System.out.println("Обязательно укажите аргумент");
+        } catch (NumberFormatException e) {
+            System.out.println("ID задачи внатуре должен быть числом");
         }
+
     }
 
     private void addTask() {
@@ -76,7 +81,13 @@ public class TaskController {
         LocalDate deadLine = LocalDate.parse(inputDeadLine, dateFormatter);
         task.setDeadLine(deadLine);
 
-        taskServices.addTask(task);
+        try {
+            taskServices.addTask(task);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Введите правильное значение статуса");
+        } catch (DateTimeException e) {
+            System.out.println("Некорректно введена дата");
+        }
     }
 
     private void list() {
@@ -99,18 +110,33 @@ public class TaskController {
         System.out.print("Дедлайн (dd.mm.yy): ");
         String deadLine = scanner.nextLine();
 
-        Task editedTask = taskServices.editTask(id, name, description, status, deadLine);
-        HashMap<Long, Task> printMap = new HashMap<>();
-        printMap.put(id, editedTask);
+        Task editedTask = null;
+        try {
+            editedTask = taskServices.editTask(id, name, description, status, deadLine);
 
-        printTasks(printMap);
+            HashMap<Long, Task> printMap = new HashMap<>();
+            printMap.put(id, editedTask);
+
+            printTasks(printMap);
+        } catch (TaskNotFoundException e) {
+            System.out.println(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.out.println("Введите правильное значение статуса");
+        } catch (DateTimeException e) {
+            System.out.println("Некорректно введена дата");
+        }
     }
 
     private void delete(Long id) {
         HashMap<Long, Task> printMap = new HashMap<>();
-        Task t = taskServices.deleteTask(id);
-        printMap.put(id, t);
-        printTasks(printMap);
+        Task t = null;
+        try {
+            t = taskServices.deleteTask(id);
+            printMap.put(id, t);
+            printTasks(printMap);
+        } catch (TaskNotFoundException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     private void filter(String argument) {
@@ -124,6 +150,7 @@ public class TaskController {
     }
 
     private void printTasks(HashMap<Long, Task> tasks) {
+        System.out.println();
         System.out.printf("%-5s %-15s %-25s %-12s %-12s%n", "ID", "Название", "Описание", "Статус", "Дедлайн");
         System.out.println("-------------------------------------------------------------------------------");
 
