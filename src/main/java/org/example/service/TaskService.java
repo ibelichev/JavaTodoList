@@ -19,10 +19,17 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final DateTimeFormatter dateFormatter;
 
-    public void addTask(Task task) {
-        if (task.getName().isEmpty() || task.getStatus() == null) {
+    public void addTask(String name, String description, String status, String deadline) {
+        if (name.isEmpty()) {
             throw new IllegalArgumentException();
         }
+
+        Task task = new Task();
+
+        task.setName(name);
+        task.setDescription(description);
+        task.setStatus(StatusEnum.valueOf(status.toUpperCase()));
+        task.setDeadLine(LocalDate.parse(deadline, dateFormatter));
         taskRepository.add(task);
     }
 

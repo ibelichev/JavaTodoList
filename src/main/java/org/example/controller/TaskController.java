@@ -7,7 +7,6 @@ import org.example.model.Task;
 import org.example.service.TaskService;
 
 import java.time.DateTimeException;
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,7 +35,6 @@ public class TaskController {
         String[] parts = commandLine.split(" ");
         String command = parts[0];
 
-        // обработать индекс аут, преобразование в енам итд
         try {
             switch (command) {
                 case "add" -> addTask();
@@ -65,24 +63,26 @@ public class TaskController {
     }
 
     private void addTask() {
-        Task task = new Task();
 
         System.out.print("Название: ");
-        task.setName(scanner.nextLine());
+        String name = scanner.nextLine();
 
         System.out.print("Описание (можно пустое): ");
-        task.setDescription(scanner.nextLine());
+        String description = scanner.nextLine();
 
         System.out.print("Статус: ");
-        task.setStatus(StatusEnum.valueOf(scanner.nextLine().toUpperCase()));
+        String status = scanner.nextLine();
 
         System.out.print("Дедлайн (dd.mm.yy): ");
-        String inputDeadLine = scanner.nextLine();
-        LocalDate deadLine = LocalDate.parse(inputDeadLine, dateFormatter);
-        task.setDeadLine(deadLine);
+        String deadline = scanner.nextLine();
 
         try {
-            taskServices.addTask(task);
+            taskServices.addTask(
+                    name,
+                    description,
+                    status,
+                    deadline
+            );
         } catch (IllegalArgumentException e) {
             System.out.println("Введите правильное значение статуса");
         } catch (DateTimeException e) {
