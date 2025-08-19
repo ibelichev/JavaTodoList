@@ -53,6 +53,7 @@ public class TaskController {
                 }
                 case "sort" -> sort();
                 case "exit" -> System.exit(exitCode);
+                default -> System.out.println("Неизвестная команда");
             }
         } catch (ArrayIndexOutOfBoundsException e) {
             System.out.println("Обязательно укажите аргумент");
